@@ -5,6 +5,7 @@ import { getNextTicketNumber } from '@/src/lib/ticket-number';
 import { sendToPowerAutomate } from '@/src/lib/power-automate-webhook';
 import { TicketStatus, Ticket } from '@/src/types/ticket';
 import { FieldValue } from 'firebase-admin/firestore';
+import firebaseConfig from '@/src/firebase/config';
 
 export async function POST(req: NextRequest) {
   try {
@@ -100,13 +101,13 @@ export async function POST(req: NextRequest) {
     
     // Add more context if it's a code 5 (NOT_FOUND) error
     if (code === 5 || errorMessage.includes('NOT_FOUND')) {
-      const currentProjectId = process.env.FIREBASE_PROJECT_ID || '(unknown)';
-      const currentDbId = process.env.FIREBASE_DATABASE_ID || '(unknown)';
-      const isOverridden = !!process.env.FIREBASE_PROJECT_ID;
+      const currentProjectId = process.env.FIREBASE_PROJECT_ID || firebaseConfig.projectId || '(unknown)';
+      const currentDbId = process.env.FIREBASE_DATABASE_ID || (firebaseConfig as any).firestoreDatabaseId || '(default)';
       
       errorMessage = `Firestore Database resource not found.
+      This usually means the Database ID is incorrect or the database does not exist in this project.
       Project ID: ${currentProjectId}
-      Database ID: ${currentDbId}`;
+      Database ID: ${currentDbId === 'default' ? '(default)' : currentDbId}`;
     }
 
     return NextResponse.json({ 
@@ -114,7 +115,10 @@ export async function POST(req: NextRequest) {
       message: errorMessage,
       errorStack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       debug: {
-        code: error.code || error.status,
+        code: code,
+        projectId: process.env.FIREBASE_PROJECT_ID || '(env not set)',
+        hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+        hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
         details: error.details,
         name: error.name
       }

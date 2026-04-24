@@ -52,11 +52,19 @@ export function getAdminDb() {
   if (_adminDb) return _adminDb;
 
   const app = getAdminApp();
-  if (!app) return null;
+  if (!app) {
+    console.error("[Firebase Admin] Cannot get database: App not initialized");
+    return null;
+  }
   
   try {
-    const dbId = process.env.FIREBASE_DATABASE_ID || (firebaseConfig as any).firestoreDatabaseId || '(default)';
-    _adminDb = getFirestore(app, dbId === 'default' ? '(default)' : dbId);
+    const configDbId = (firebaseConfig as any).firestoreDatabaseId;
+    const dbId = process.env.FIREBASE_DATABASE_ID || configDbId || '(default)';
+    const finalDbId = dbId === 'default' || !dbId ? '(default)' : dbId;
+    
+    console.log(`[Firebase Admin] Connecting to database: ${finalDbId} in project: ${process.env.FIREBASE_PROJECT_ID || firebaseConfig.projectId}`);
+    
+    _adminDb = getFirestore(app, finalDbId);
     return _adminDb;
   } catch (error) {
     console.error("[Firebase Admin] DB error:", error);

@@ -15,6 +15,7 @@ export default function Dashboard() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [nextActionFilter, setNextActionFilter] = useState<string>("all");
@@ -27,9 +28,13 @@ export default function Dashboard() {
         const data = await res.json();
         if (data.success) {
           setTickets(data.tickets);
+          setError(null);
+        } else {
+          setError(data.message || "Failed to fetch tickets");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching tickets via API:", error);
+        setError("Network error fetching tickets. Please check your connection.");
       } finally {
         setLoading(false);
       }
@@ -37,21 +42,25 @@ export default function Dashboard() {
 
     fetchTickets();
     
-    // Optional: Poll every 30 seconds for updates
-    const interval = setInterval(fetchTickets, 30000);
+    // Optional: Poll every 60 seconds for updates
+    const interval = setInterval(fetchTickets, 60000);
     return () => clearInterval(interval);
   }, [user]);
 
   const handleRefresh = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/helpdesk/tickets/get");
       const data = await res.json();
       if (data.success) {
         setTickets(data.tickets);
+      } else {
+        setError(data.message || "Failed to refresh tickets");
       }
     } catch (error) {
       console.error("Error refreshing tickets:", error);
+      setError("Network error refreshing tickets.");
     } finally {
       setLoading(false);
     }
@@ -117,6 +126,16 @@ export default function Dashboard() {
         </header>
 
         <SummaryCards stats={stats} />
+
+        {error && (
+          <div className="mt-8 p-6 bg-rose-50 border border-rose-100 rounded-xl">
+            <h2 className="text-rose-800 font-bold mb-2">Firestore Configuration Error</h2>
+            <p className="text-rose-600 font-medium whitespace-pre-wrap">{error}</p>
+            <div className="mt-4 text-sm text-rose-500 font-semibold px-3 py-2 bg-white/50 rounded-lg inline-block border border-rose-200">
+              Hint: Ensure FIREBASE_DATABASE_ID is correct in your Vercel/Production settings.
+            </div>
+          </div>
+        )}
 
         <section className="mt-10">
           <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6 shadow-sm flex flex-col md:flex-row gap-4 items-center">
