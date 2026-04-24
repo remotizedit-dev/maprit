@@ -25,6 +25,12 @@ Full-stack Helpdesk Dashboard integrated with ElevenLabs AI voice agent and Micr
 - Generate a new private key and save the JSON.
 - Use the values in your `.env.local`.
 
+### 3. ElevenLabs Post-call Webhook
+1. Go to your ElevenLabs Conversation Agent settings.
+2. Under "Post-call", find the Webhook URL field.
+3. Set it to: `https://maprit.vercel.app/api/elevenlabs/call-logs`
+4. The agent will now automatically send call analytics and transcripts to the dashboard after every conversation.
+
 ## Environment Variables
 
 Create a `.env.local` file with the following:
@@ -74,6 +80,11 @@ Endpoint for ElevenLabs AI Agent.
   "is_issue_resolved": false
 }
 ```
+
+### POST /api/elevenlabs/call-logs
+Endpoint for ElevenLabs Post-call Webhooks. Stores call transcripts and analytics in Firestore.
+
+**URL:** `https://maprit.vercel.app/api/elevenlabs/call-logs`
 
 ## Seeding Sample Data
 Visit `/api/debug/seed` in your browser to populate the dashboard with test tickets.
