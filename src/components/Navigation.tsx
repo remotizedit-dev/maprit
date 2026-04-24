@@ -22,11 +22,17 @@ export default function Navigation() {
         <div className="bg-indigo-600 p-2 rounded-lg">
           <Headset className="w-6 h-6 text-white" />
         </div>
-        <span className="font-bold text-xl tracking-tight text-slate-900 border-none">Helpcenter</span>
+        <div className="flex flex-col">
+          <span className="font-bold text-xl tracking-tight text-slate-900 leading-none">ClarioAI</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-1">by Remotized IT</span>
+        </div>
       </div>
       
       <div className="flex-1 px-4 py-6 space-y-1">
-        {navigation.map((item) => {
+        {[
+          { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+          { name: "All Tickets", href: "/tickets", icon: Headset },
+        ].map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
@@ -77,6 +83,14 @@ export default function Navigation() {
           <LogOut className="w-5 h-5 text-slate-400 group-hover:text-rose-500 transition-colors" />
           Sign Out
         </button>
+
+        <div className="pt-4 border-t border-slate-100 px-3">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Product of</p>
+          <div className="flex items-center gap-2 text-slate-900 group cursor-default">
+            <span className="font-bold text-sm tracking-tight text-indigo-600">Remotized IT</span>
+          </div>
+          <p className="text-[9px] text-slate-400 mt-2 italic">Empowering support with voice AI.</p>
+        </div>
       </div>
     </nav>
   );

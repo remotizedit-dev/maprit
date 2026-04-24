@@ -129,17 +129,18 @@ export default function TicketDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="flex bg-slate-50 min-h-screen">
       <Navigation />
       
-      <main className="max-w-5xl mx-auto px-4 py-8">
-        <Link 
-          href="/dashboard" 
-          className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-medium mb-6 transition-colors group"
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          Back to Dashboard
-        </Link>
+      <main className="flex-1 p-8 overflow-y-auto h-screen">
+        <div className="max-w-6xl mx-auto">
+          <Link 
+            href="/tickets" 
+            className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-medium mb-6 transition-colors group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            Back to All Tickets
+          </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
@@ -330,6 +331,14 @@ export default function TicketDetailsPage() {
               </ul>
             </div>
           </div>
+        </div>
+
+        <footer className="mt-12 py-8 border-t border-slate-200 flex flex-col items-center justify-center gap-2">
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-loose">
+            ClarioAI by Remotized IT
+          </p>
+          <p className="text-[10px] text-slate-400">© 2024 Remotized IT. All rights reserved.</p>
+        </footer>
         </div>
       </main>
     </div>

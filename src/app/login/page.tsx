@@ -42,8 +42,9 @@ export default function Login() {
           <div className="bg-indigo-600 p-4 rounded-2xl mb-6 shadow-lg shadow-indigo-100">
             <Headset className="w-12 h-12 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Helpcenter</h1>
-          <p className="text-slate-500 mt-2 font-medium text-center">
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">ClarioAI</h1>
+          <p className="text-indigo-600 text-xs font-bold uppercase tracking-widest mt-1">by Remotized IT</p>
+          <p className="text-slate-500 mt-4 font-medium text-center">
             Sign in with your internally managed account.
           </p>
         </div>
@@ -101,10 +102,15 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="mt-8 text-center text-xs text-slate-400 font-bold uppercase tracking-widest leading-loose">
-          Secure Access Only<br/>
-          Internal Corporate Tool
-        </p>
+        <div className="mt-8 text-center space-y-2">
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-loose">
+            Secure Access Only<br/>
+            Internal Corporate Tool
+          </p>
+          <div className="pt-4 border-t border-slate-100 italic text-[10px] text-slate-400 font-medium">
+            A premium product of <span className="text-indigo-500 font-bold tracking-tight not-italic">Remotized IT</span>
+          </div>
+        </div>
       </div>
     </div>
   );

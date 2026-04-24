@@ -8,17 +8,13 @@ import { Ticket, TicketStatus, TicketNextAction } from "@/src/types/ticket";
 import SummaryCards from "@/src/components/SummaryCards";
 import TicketTable from "@/src/components/TicketTable";
 import Navigation from "@/src/components/Navigation";
-import { Search, Filter, Plus, Settings, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import Link from "next/link";
 
 export default function Dashboard() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [nextActionFilter, setNextActionFilter] = useState<string>("all");
   const { user } = useAuth();
 
   useEffect(() => {
@@ -66,28 +62,6 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    let result = tickets;
-
-    if (searchTerm) {
-      result = result.filter(t => 
-        t.callerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.incidentTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.ticketNumber.includes(searchTerm)
-      );
-    }
-
-    if (statusFilter !== "all") {
-      result = result.filter(t => t.status === statusFilter);
-    }
-
-    if (nextActionFilter !== "all") {
-      result = result.filter(t => t.nextAction === nextActionFilter);
-    }
-
-    setFilteredTickets(result);
-  }, [searchTerm, statusFilter, nextActionFilter, tickets]);
 
   const stats = {
     total: tickets.length,
@@ -96,6 +70,14 @@ export default function Dashboard() {
     resolved: tickets.filter(t => t.status === TicketStatus.RESOLVED).length,
   };
 
+  const recentTickets = [...tickets]
+    .sort((a, b) => {
+      const dateA = a.createdAt?.seconds || 0;
+      const dateB = b.createdAt?.seconds || 0;
+      return dateB - dateA;
+    })
+    .slice(0, 5);
+
   return (
     <div className="flex bg-slate-50 min-h-screen">
       <Navigation />
@@ -103,8 +85,8 @@ export default function Dashboard() {
       <main className="flex-1 p-8 overflow-y-auto">
         <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Helpdesk Dashboard</h1>
-            <p className="text-slate-500 mt-1">Real-time overview of all caller incidents.</p>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">ClarioAI Dashboard</h1>
+            <p className="text-slate-500 mt-1">Voice-activated support intelligence overview.</p>
           </div>
           <div className="flex gap-3">
             <button
@@ -115,13 +97,6 @@ export default function Dashboard() {
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </button>
-            <Link 
-              href="/tickets/new"
-              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-all shadow-sm hover:shadow-md active:scale-95"
-            >
-              <Plus className="w-5 h-5" />
-              Create Ticket
-            </Link>
           </div>
         </header>
 
@@ -129,66 +104,41 @@ export default function Dashboard() {
 
         {error && (
           <div className="mt-8 p-6 bg-rose-50 border border-rose-100 rounded-xl">
-            <h2 className="text-rose-800 font-bold mb-2">Firestore Configuration Error</h2>
+            <h2 className="text-rose-800 font-bold mb-2">System Error</h2>
             <p className="text-rose-600 font-medium whitespace-pre-wrap">{error}</p>
-            <div className="mt-4 text-sm text-rose-500 font-semibold px-3 py-2 bg-white/50 rounded-lg inline-block border border-rose-200">
-              Hint: Ensure FIREBASE_DATABASE_ID is correct in your Vercel/Production settings.
-            </div>
           </div>
         )}
 
         <section className="mt-10">
-          <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6 shadow-sm flex flex-col md:flex-row gap-4 items-center">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search by caller, company, ticket #..."
-                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <div className="flex gap-4 w-full md:w-auto">
-              <div className="relative flex-1 md:w-48">
-                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <select
-                  className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-slate-700"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="all">All Statuses</option>
-                  {Object.values(TicketStatus).map(s => (
-                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="relative flex-1 md:w-48">
-                <Settings className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <select
-                  className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-slate-700"
-                  value={nextActionFilter}
-                  onChange={(e) => setNextActionFilter(e.target.value)}
-                >
-                  <option value="all">All Actions</option>
-                  {Object.values(TicketNextAction).map(a => (
-                    <option key={a} value={a}>{a.charAt(0).toUpperCase() + a.slice(1)}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-slate-900">Recent Incidents</h2>
+            <Link 
+              href="/tickets"
+              className="text-indigo-600 hover:text-indigo-700 text-sm font-bold uppercase tracking-wider"
+            >
+              View All
+            </Link>
           </div>
-
-          <TicketTable tickets={filteredTickets} />
           
-          {!loading && filteredTickets.length > 0 && (
-            <p className="text-xs text-slate-400 mt-4 font-medium text-right uppercase tracking-widest">
-              Showing {filteredTickets.length} of {tickets.length} tickets
-            </p>
+          {loading ? (
+            <div className="bg-white border border-slate-200 rounded-xl p-12 text-center">
+               <RefreshCw className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+            </div>
+          ) : recentTickets.length > 0 ? (
+            <TicketTable tickets={recentTickets} />
+          ) : (
+            <div className="bg-white border border-slate-200 rounded-xl p-12 text-center">
+              <p className="text-slate-400 font-medium">No recent tickets captured yet.</p>
+            </div>
           )}
         </section>
+
+        <footer className="mt-12 py-8 border-t border-slate-200 flex flex-col items-center justify-center gap-2">
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-loose">
+            ClarioAI by Remotized IT
+          </p>
+          <p className="text-[10px] text-slate-400">© 2024 Remotized IT. All rights reserved.</p>
+        </footer>
       </main>
     </div>
   );

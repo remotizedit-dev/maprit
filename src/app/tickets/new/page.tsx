@@ -52,7 +52,7 @@ export default function NewTicket() {
       }
 
       console.log("Ticket created successfully:", result);
-      router.push("/dashboard");
+      router.push("/tickets");
     } catch (err: any) {
       console.error("Submission error:", err);
       setError(err.message);
@@ -66,9 +66,9 @@ export default function NewTicket() {
       
       <main className="flex-1 p-8 overflow-y-auto">
         <header className="mb-8">
-          <Link href="/dashboard" className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors text-sm font-semibold mb-4">
+          <Link href="/tickets" className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors text-sm font-semibold mb-4">
             <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
+            Back to All Tickets
           </Link>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Manual Ticket Entry</h1>
           <p className="text-slate-500 mt-1">Create a new support ticket manually for walk-in or offline callers.</p>
@@ -184,7 +184,7 @@ export default function NewTicket() {
             </div>
 
             <div className="pt-6 border-t border-slate-100 flex justify-end gap-4">
-              <Link href="/dashboard" className="px-6 py-2.5 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
+              <Link href="/tickets" className="px-6 py-2.5 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
                 Cancel
               </Link>
               <button
