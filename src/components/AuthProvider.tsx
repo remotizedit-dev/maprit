@@ -6,6 +6,7 @@ import {
   User, 
   signInWithPopup, 
   GoogleAuthProvider, 
+  signInWithEmailAndPassword,
   signOut as firebaseSignOut 
 } from "firebase/auth";
 import { auth } from "@/src/firebase/firebase-client";
@@ -16,6 +17,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, pass: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -63,6 +65,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithEmail = async (email: string, pass: string) => {
+    if (!auth) return;
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Error signing in with email", error);
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     if (!auth) return;
     try {
@@ -73,9 +86,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const isServer = typeof window === "undefined";
+
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut }}>
-      {loading ? (
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signOut }}>
+      {loading && !isServer ? (
         <div className="flex h-screen w-full items-center justify-center bg-slate-50">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />

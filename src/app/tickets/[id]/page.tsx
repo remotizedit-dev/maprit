@@ -23,7 +23,6 @@ import {
   Circle
 } from "lucide-react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react";
 
 export default function TicketDetailsPage() {
   const { id } = useParams();
@@ -223,11 +222,8 @@ export default function TicketDetailsPage() {
               <div className="p-6 space-y-6 max-h-[500px] overflow-y-auto bg-slate-50/50">
                 {ticket.comments && ticket.comments.length > 0 ? (
                   ticket.comments.map((comment, index) => (
-                    <motion.div 
+                    <div 
                       key={comment.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
                       className="flex gap-4"
                     >
                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
@@ -244,7 +240,7 @@ export default function TicketDetailsPage() {
                           <p className="text-slate-700 text-sm whitespace-pre-wrap">{comment.text}</p>
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                   ))
                 ) : (
                   <div className="text-center py-12">

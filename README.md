@@ -77,3 +77,14 @@ Endpoint for ElevenLabs AI Agent.
 
 ## Seeding Sample Data
 Visit `/api/debug/seed` in your browser to populate the dashboard with test tickets.
+
+## Vercel Deployment
+
+To deploy this application on Vercel:
+
+1.  **Push to GitHub**: Push your codebase to a GitHub repository.
+2.  **Import to Vercel**: Connect your GitHub repo to Vercel.
+3.  **Configure Environment Variables**: In your Vercel project settings, add the environment variables listed in the **Environment Variables** section above. 
+    - For the client-side variables, make sure they start with `NEXT_PUBLIC_`.
+    - For `FIREBASE_PRIVATE_KEY`, ensure you include the full string including `\n`.
+4.  **Deploy**: Vercel will build and deploy your application. The `firebase-applet-config.json` file is included in the build so the app should find its initial configuration, but environment variables will override it in production for security.
