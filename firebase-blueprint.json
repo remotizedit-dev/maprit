@@ -1,0 +1,48 @@
+{
+  "entities": {
+    "Ticket": {
+      "title": "Ticket",
+      "description": "A helpdesk ticket record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ticketNumber": { "type": "string" },
+        "callerName": { "type": "string" },
+        "companyName": { "type": "string" },
+        "callbackNumber": { "type": "string" },
+        "ticketNumberFromCaller": { "type": "string" },
+        "computerName": { "type": "string" },
+        "incidentTitle": { "type": "string" },
+        "incidentSummary": { "type": "string" },
+        "vipCaller": { "type": "boolean" },
+        "nextAction": { "type": "string" },
+        "isIssueResolved": { "type": "boolean" },
+        "status": { "type": "string" },
+        "source": { "type": "string" },
+        "conversationId": { "type": "string" },
+        "callSid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ticketNumber", "callerName", "companyName", "status"]
+    },
+    "Counter": {
+      "title": "Counter",
+      "description": "Numeric counter for sequential IDs",
+      "type": "object",
+      "properties": {
+        "currentNumber": { "type": "integer" }
+      }
+    }
+  },
+  "firestore": {
+    "/tickets/{ticketId}": {
+      "schema": "Ticket",
+      "description": "Collection of helpdesk tickets"
+    },
+    "/counters/{counterId}": {
+      "schema": "Counter",
+      "description": "Collection of counters for sequential IDs"
+    }
+  }
+}

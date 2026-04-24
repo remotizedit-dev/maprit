@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitive Definition
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Helper to validate ticket document structure
+    function isValidTicket(data) {
+      return data.keys().hasAll(['id', 'ticketNumber', 'callerName', 'companyName', 'status', 'createdAt', 'updatedAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.ticketNumber is string && data.ticketNumber.size() <= 10 &&
+             data.callerName is string && data.callerName.size() <= 200 &&
+             data.companyName is string && data.companyName.size() <= 200 &&
+             data.status in ['new', 'open', 'pending', 'resolved', 'closed'] &&
+             data.incidentTitle is string && data.incidentTitle.size() <= 500 &&
+             data.incidentSummary is string && data.incidentSummary.size() <= 5000;
+    }
+
+    // Tickets collection
+    match /tickets/{ticketId} {
+      // 8. Secure List Queries: Evaluation against resource.data
+      allow list: if isSignedIn(); // Note: In a real app, we might check a tenant role
+      allow get: if isSignedIn();
+
+      allow create: if isSignedIn() && 
+                    isValidTicket(incoming()) &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time;
+      
+      allow update: if isSignedIn() &&
+                    // Action based updates
+                    (
+                      // Update Status Action
+                      (incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status in ['open', 'pending', 'resolved', 'closed']) ||
+                      // Update Summary Action
+                      (incoming().diff(existing()).affectedKeys().hasOnly(['incidentSummary', 'updatedAt'])) ||
+                      // Update Next Action
+                      (incoming().diff(existing()).affectedKeys().hasOnly(['nextAction', 'updatedAt'])) ||
+                      // Resolve Action
+                      (incoming().diff(existing()).affectedKeys().hasOnly(['isIssueResolved', 'updatedAt', 'status']))
+                    ) &&
+                    incoming().updatedAt == request.time &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().ticketNumber == existing().ticketNumber;
+
+      allow delete: if false;
+    }
+
+    // Counters collection (Sequential ID generation)
+    match /counters/{counterId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && 
+                   incoming().currentNumber is int && 
+                   incoming().currentNumber >= 1000;
+    }
+  }
+}

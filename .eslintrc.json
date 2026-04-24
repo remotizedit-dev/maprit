@@ -1,0 +1,16 @@
+{
+  "extends": [
+    "next/core-web-vitals"
+  ],
+  "overrides": [
+    {
+      "files": ["*.rules"],
+      "plugins": ["@firebase/security-rules"],
+      "parser": "@firebase/eslint-plugin-security-rules/rules-parser",
+      "rules": {
+        "@firebase/security-rules/no-blanket-reads": "error",
+        "@firebase/security-rules/no-unverified-auth-checks": "error"
+      }
+    }
+  ]
+}

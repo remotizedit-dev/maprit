@@ -1,0 +1,6 @@
+{
+  "name": "Helpdesk Dashboard",
+  "description": "A full-stack dashboard for managing helpdesk tickets integrated with ElevenLabs AI voice agent and Microsoft Teams.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
