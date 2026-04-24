@@ -2,19 +2,19 @@ import { z } from 'zod';
 import { TicketNextAction, TicketStatus } from '@/src/types/ticket';
 
 export const CreateTicketSchema = z.object({
-  caller_name: z.string().min(1, "Caller name is required"),
-  company_name: z.string().min(1, "Company name is required"),
-  callback_number: z.string().min(1, "Callback number is required"),
-  ticket_number: z.string().optional(), // This is the caller's ticket number if any
-  computer_name: z.string().min(1, "Computer name is required"),
-  incident_title: z.string().min(1, "Incident title is required"),
-  incident_summary: z.string().min(1, "Incident summary is required"),
-  vip_caller: z.boolean().default(false),
-  next_action: z.nativeEnum(TicketNextAction).default(TicketNextAction.TROUBLESHOOT),
-  is_issue_resolved: z.boolean().default(false),
-  source: z.string().default('elevenlabs_voice_agent'),
-  conversation_id: z.string().optional(),
-  call_sid: z.string().optional(),
+  caller_name: z.string().optional().default("Unknown Caller"),
+  company_name: z.string().optional().default("Unknown Company"),
+  callback_number: z.string().optional().default(""),
+  ticket_number: z.string().optional().default(""), // This is the caller's ticket number if any
+  computer_name: z.string().optional().default(""),
+  incident_title: z.string().optional().default("Support Request"),
+  incident_summary: z.string().optional().default("Caller requested support."),
+  vip_caller: z.boolean().optional().default(false),
+  next_action: z.nativeEnum(TicketNextAction).optional().default(TicketNextAction.ESCALATE),
+  is_issue_resolved: z.boolean().optional().default(false),
+  source: z.string().optional().default('elevenlabs_voice_agent'),
+  conversation_id: z.string().optional().default(""),
+  call_sid: z.string().optional().default(""),
 });
 
 export type CreateTicketInput = z.infer<typeof CreateTicketSchema>;

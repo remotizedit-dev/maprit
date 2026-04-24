@@ -15,11 +15,13 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+    console.log("Incoming ElevenLabs payload:", JSON.stringify(body, null, 2));
     
     // 1. Validate with Zod
     const result = CreateTicketSchema.safeParse(body);
     
     if (!result.success) {
+      console.error("Ticket validation failed:", JSON.stringify(result.error.errors, null, 2));
       return NextResponse.json({ 
         success: false, 
         error: result.error.errors, 
