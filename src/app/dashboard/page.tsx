@@ -13,33 +13,42 @@ import Link from "next/link";
 
 export default function Dashboard() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [callCount, setCallCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
-    async function fetchTickets() {
+    async function fetchData() {
       try {
-        const res = await fetch("/api/helpdesk/tickets/get");
-        const data = await res.json();
-        if (data.success) {
-          setTickets(data.tickets);
-          setError(null);
+        const [ticketsRes, callsRes] = await Promise.all([
+          fetch("/api/helpdesk/tickets/get"),
+          fetch("/api/elevenlabs/call-logs/get")
+        ]);
+
+        const ticketsData = await ticketsRes.json();
+        const callsData = await callsRes.json();
+
+        if (ticketsData.success) {
+          setTickets(ticketsData.tickets);
         } else {
-          setError(data.message || "Failed to fetch tickets");
+          setError(ticketsData.message || "Failed to fetch tickets");
+        }
+
+        if (callsData.success) {
+          setCallCount(callsData.callLogs.length);
         }
       } catch (error: any) {
-        console.error("Error fetching tickets via API:", error);
-        setError("Network error fetching tickets. Please check your connection.");
+        console.error("Error fetching dashboard data:", error);
+        setError("Network error fetching data.");
       } finally {
         setLoading(false);
       }
     }
 
-    fetchTickets();
+    fetchData();
     
-    // Optional: Poll every 60 seconds for updates
-    const interval = setInterval(fetchTickets, 60000);
+    const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
   }, [user]);
 
@@ -47,16 +56,23 @@ export default function Dashboard() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/helpdesk/tickets/get");
-      const data = await res.json();
-      if (data.success) {
-        setTickets(data.tickets);
-      } else {
-        setError(data.message || "Failed to refresh tickets");
+      const [ticketsRes, callsRes] = await Promise.all([
+        fetch("/api/helpdesk/tickets/get"),
+        fetch("/api/elevenlabs/call-logs/get")
+      ]);
+
+      const ticketsData = await ticketsRes.json();
+      const callsData = await callsRes.json();
+
+      if (ticketsData.success) {
+        setTickets(ticketsData.tickets);
+      }
+      if (callsData.success) {
+        setCallCount(callsData.callLogs.length);
       }
     } catch (error) {
-      console.error("Error refreshing tickets:", error);
-      setError("Network error refreshing tickets.");
+      console.error("Error refreshing dashboard data:", error);
+      setError("Network error refreshing data.");
     } finally {
       setLoading(false);
     }
@@ -68,6 +84,7 @@ export default function Dashboard() {
     open: tickets.filter(t => t.status === TicketStatus.OPEN || t.status === TicketStatus.NEW).length,
     pending: tickets.filter(t => t.status === TicketStatus.PENDING).length,
     resolved: tickets.filter(t => t.status === TicketStatus.RESOLVED).length,
+    totalCalls: callCount,
   };
 
   const recentTickets = [...tickets]

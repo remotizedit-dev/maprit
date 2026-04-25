@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, PlusCircle, Headset, LogOut, User as UserIcon } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Headset, LogOut, User as UserIcon, PhoneCall } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "./AuthProvider";
 
@@ -32,6 +32,7 @@ export default function Navigation() {
         {[
           { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
           { name: "All Tickets", href: "/tickets", icon: Headset },
+          { name: "Call Analytics", href: "/call-logs", icon: PhoneCall },
         ].map((item) => {
           const isActive = pathname === item.href;
           return (
