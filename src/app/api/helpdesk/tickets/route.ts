@@ -3,6 +3,7 @@ import { getAdminDb } from '@/src/firebase/firebase-admin';
 import { CreateTicketSchema } from '@/src/lib/validators/helpdesk-ticket';
 import { getNextTicketNumber } from '@/src/lib/ticket-number';
 import { sendToPowerAutomate } from '@/src/lib/power-automate-webhook';
+import { sendTicketNotification } from '@/src/lib/email-service';
 import { TicketStatus, Ticket } from '@/src/types/ticket';
 import { FieldValue } from 'firebase-admin/firestore';
 import firebaseConfig from '@/src/firebase/config';
@@ -86,8 +87,11 @@ export async function POST(req: NextRequest) {
     // We don't await this if we want to return response ASAP to the AI
     // but the user says "return JSON response immediately", usually it's fine to fire and forget
     sendToPowerAutomate(webhookData as any).catch(err => console.error("Webhook background error:", err));
+    
+    // 5. Send Email Notification
+    sendTicketNotification(webhookData).catch(err => console.error("Email notification background error:", err));
 
-    // 5. Return JSON response
+    // 6. Return JSON response
     return NextResponse.json({
       success: true,
       ticket_number: ticketNumber,
