@@ -51,9 +51,10 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { status, comment, authorName } = body;
+    const { status, comment, authorName, ...otherFields } = body;
 
     const updateData: any = {
+      ...otherFields,
       updatedAt: FieldValue.serverTimestamp()
     };
 
@@ -76,6 +77,26 @@ export async function PATCH(
     return NextResponse.json({ success: true, message: "Ticket updated successfully" });
   } catch (error: any) {
     console.error("API Error updating ticket:", error);
+    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const adminDb = getAdminDb();
+    if (!adminDb) {
+      return NextResponse.json({ success: false, message: "Firebase Admin not initialized" }, { status: 500 });
+    }
+
+    await adminDb.collection('tickets').doc(id).delete();
+
+    return NextResponse.json({ success: true, message: "Ticket deleted successfully" });
+  } catch (error: any) {
+    console.error("API Error deleting ticket:", error);
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }

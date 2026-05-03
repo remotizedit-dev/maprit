@@ -20,7 +20,11 @@ import {
   Send,
   Loader2,
   AlertCircle,
-  Circle
+  Circle,
+  Trash2,
+  Edit2,
+  Save,
+  X
 } from "lucide-react";
 import Link from "next/link";
 
@@ -33,6 +37,17 @@ export default function TicketDetailsPage() {
   const [comment, setComment] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    incidentTitle: "",
+    incidentSummary: "",
+    callerName: "",
+    companyName: "",
+    callbackNumber: "",
+    computerName: "",
+    vipCaller: false
+  });
 
   const fetchTicket = useCallback(async () => {
     try {
@@ -40,6 +55,15 @@ export default function TicketDetailsPage() {
       const data = await res.json();
       if (data.success) {
         setTicket(data.ticket);
+        setEditForm({
+          incidentTitle: data.ticket.incidentTitle,
+          incidentSummary: data.ticket.incidentSummary,
+          callerName: data.ticket.callerName,
+          companyName: data.ticket.companyName,
+          callbackNumber: data.ticket.callbackNumber,
+          computerName: data.ticket.computerName,
+          vipCaller: data.ticket.vipCaller
+        });
       } else {
         setError(data.message || "Failed to load ticket");
       }
@@ -91,7 +115,11 @@ export default function TicketDetailsPage() {
       const res = await fetch(`/api/helpdesk/tickets/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ 
+          status: newStatus,
+          comment: `Status changed to ${newStatus.replace(/_/g, ' ')}`,
+          authorName: "System"
+        })
       });
 
       const data = await res.json();
@@ -104,6 +132,56 @@ export default function TicketDetailsPage() {
       alert("Error updating status");
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  const handleUpdateTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUpdatingStatus(true);
+    try {
+      const res = await fetch(`/api/helpdesk/tickets/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          ...editForm,
+          comment: `Ticket details updated`,
+          authorName: "Agent" 
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setIsEditing(false);
+        fetchTicket();
+      } else {
+        alert(data.message || "Failed to update ticket");
+      }
+    } catch (err) {
+      alert("Error updating ticket");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this ticket? This action cannot be undone.")) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/helpdesk/tickets/${id}`, {
+        method: "DELETE"
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        router.push("/tickets");
+      } else {
+        alert(data.message || "Failed to delete ticket");
+      }
+    } catch (err) {
+      alert("Error deleting ticket");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -160,54 +238,102 @@ export default function TicketDetailsPage() {
                   </h1>
                 </div>
                 
-                <div className="flex gap-2">
-                  {ticket.status !== TicketStatus.RESOLVED && ticket.status !== TicketStatus.CLOSED ? (
-                    <button
-                      onClick={() => handleUpdateStatus(TicketStatus.RESOLVED)}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative">
+                    <select
+                      value={ticket.status}
+                      onChange={(e) => handleUpdateStatus(e.target.value as TicketStatus)}
                       disabled={updatingStatus}
-                      className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50"
+                      className="appearance-none bg-white border border-slate-200 text-slate-700 h-10 pl-4 pr-10 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer disabled:opacity-50 shadow-sm"
                     >
-                      <CheckCircle2 className="w-4 h-4" />
-                      Resolve
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleUpdateStatus(TicketStatus.OPEN)}
-                      disabled={updatingStatus}
-                      className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      Re-open
-                    </button>
-                  )}
-                  
-                  {ticket.status !== TicketStatus.CLOSED && (
-                    <button
-                      onClick={() => handleUpdateStatus(TicketStatus.CLOSED)}
-                      disabled={updatingStatus}
-                      className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50"
-                    >
-                      <XCircle className="w-4 h-4" />
-                      Close
-                    </button>
-                  ) || ticket.status === TicketStatus.CLOSED && (
-                     <button
-                      onClick={() => handleUpdateStatus(TicketStatus.OPEN)}
-                      disabled={updatingStatus}
-                      className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      Re-open
-                    </button>
-                  )}
+                      {Object.values(TicketStatus).map((status) => (
+                        <option key={status} value={status}>
+                          {status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 h-10 px-4 rounded-lg text-sm font-semibold transition-all active:scale-95 shadow-sm"
+                  >
+                    {isEditing ? <X className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+                    {isEditing ? "Cancel" : "Edit"}
+                  </button>
+
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="inline-flex items-center gap-2 bg-white border border-rose-100 hover:bg-rose-50 text-rose-600 h-10 px-4 rounded-lg text-sm font-semibold transition-all active:scale-95 shadow-sm"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
                 </div>
               </div>
 
               <div className="prose prose-slate max-w-none">
                 <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Incident Summary</h3>
-                <p className="text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  {ticket.incidentSummary}
-                </p>
+                {isEditing ? (
+                  <form onSubmit={handleUpdateTicket} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Title</label>
+                      <input 
+                        type="text"
+                        value={editForm.incidentTitle}
+                        onChange={(e) => setEditForm({...editForm, incidentTitle: e.target.value})}
+                        className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Summary</label>
+                      <textarea
+                        value={editForm.incidentSummary}
+                        onChange={(e) => setEditForm({...editForm, incidentSummary: e.target.value})}
+                        rows={4}
+                        className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                       <div>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Caller Name</label>
+                        <input 
+                          type="text"
+                          value={editForm.callerName}
+                          onChange={(e) => setEditForm({...editForm, callerName: e.target.value})}
+                          className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Company</label>
+                        <input 
+                          type="text"
+                          value={editForm.companyName}
+                          onChange={(e) => setEditForm({...editForm, companyName: e.target.value})}
+                          className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                       <button
+                        type="submit"
+                        disabled={updatingStatus}
+                        className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                      >
+                        <Save className="w-4 h-4" />
+                        Save Changes
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <p className="text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    {ticket.incidentSummary}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -349,7 +475,9 @@ function StatusBadge({ status }: { status: TicketStatus }) {
   const configs: Record<TicketStatus, { label: string; bg: string; text: string; icon: any }> = {
     [TicketStatus.NEW]: { label: "New", bg: "bg-blue-100", text: "text-blue-700", icon: Info },
     [TicketStatus.OPEN]: { label: "Open", bg: "bg-amber-100", text: "text-amber-700", icon: Circle },
-    [TicketStatus.PENDING]: { label: "Pending", bg: "bg-indigo-100", text: "text-indigo-700", icon: Clock },
+    [TicketStatus.ASSIGNED]: { label: "Assigned", bg: "bg-indigo-100", text: "text-indigo-700", icon: User },
+    [TicketStatus.IN_PROGRESS]: { label: "In Progress", bg: "bg-sky-100", text: "text-sky-700", icon: RotateCcw },
+    [TicketStatus.WAITING_CLIENT]: { label: "Waiting Client", bg: "bg-rose-100", text: "text-rose-700", icon: Clock },
     [TicketStatus.RESOLVED]: { label: "Resolved", bg: "bg-emerald-100", text: "text-emerald-700", icon: CheckCircle2 },
     [TicketStatus.CLOSED]: { label: "Closed", bg: "bg-slate-100", text: "text-slate-700", icon: XCircle },
   };

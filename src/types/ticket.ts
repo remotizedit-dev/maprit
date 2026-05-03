@@ -7,7 +7,9 @@ export enum TicketNextAction {
 export enum TicketStatus {
   NEW = 'new',
   OPEN = 'open',
-  PENDING = 'pending',
+  ASSIGNED = 'assigned',
+  IN_PROGRESS = 'in_progress',
+  WAITING_CLIENT = 'waiting_for_client_response',
   RESOLVED = 'resolved',
   CLOSED = 'closed'
 }

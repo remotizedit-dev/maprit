@@ -82,7 +82,11 @@ export default function Dashboard() {
   const stats = {
     total: tickets.length,
     open: tickets.filter(t => t.status === TicketStatus.OPEN || t.status === TicketStatus.NEW).length,
-    pending: tickets.filter(t => t.status === TicketStatus.PENDING).length,
+    pending: tickets.filter(t => 
+      t.status === TicketStatus.ASSIGNED || 
+      t.status === TicketStatus.IN_PROGRESS || 
+      t.status === TicketStatus.WAITING_CLIENT
+    ).length,
     resolved: tickets.filter(t => t.status === TicketStatus.RESOLVED).length,
     totalCalls: callCount,
   };

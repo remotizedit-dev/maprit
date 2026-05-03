@@ -88,8 +88,12 @@ export async function POST(req: NextRequest) {
     // but the user says "return JSON response immediately", usually it's fine to fire and forget
     sendToPowerAutomate(webhookData as any).catch(err => console.error("Webhook background error:", err));
     
-    // 5. Send Email Notification
-    sendTicketNotification(webhookData).catch(err => console.error("Email notification background error:", err));
+    // 5. Send Email Notification (Awaiting for 100% reliability as requested)
+    try {
+      await sendTicketNotification(webhookData);
+    } catch (err) {
+      console.error("Email notification error:", err);
+    }
 
     // 6. Return JSON response
     return NextResponse.json({

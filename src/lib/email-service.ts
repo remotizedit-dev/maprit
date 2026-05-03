@@ -35,8 +35,11 @@ export async function sendTicketNotification(ticketData: any) {
       source
     } = ticketData;
 
-    const data = await resend.emails.send({
-      from: 'ClarioAI Helpdesk <notifications@resend.dev>', // If they verify a domain, they should change this
+    const senderEmail = process.env.SENDER_EMAIL || 'ClarioAI Helpdesk <notifications@resend.dev>';
+    console.log("Using sender email:", senderEmail);
+
+    const { data, error } = await resend.emails.send({
+      from: senderEmail,
       to: [notificationEmail],
       subject: `[New Ticket] ${ticketNumber} - ${incidentTitle || 'No Title'}`,
       html: `
@@ -86,7 +89,12 @@ export async function sendTicketNotification(ticketData: any) {
       `,
     });
 
-    console.log("Email notification sent:", data);
+    if (error) {
+      console.error("Resend API Error:", error);
+      throw new Error(`Resend Error: ${error.message}`);
+    }
+
+    console.log("Email notification sent successfully. Data ID:", data?.id);
     return data;
   } catch (error) {
     console.error("Failed to send ticket email notification:", error);
