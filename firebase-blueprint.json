@@ -33,6 +33,30 @@
       "properties": {
         "currentNumber": { "type": "integer" }
       }
+    },
+    "CallLog": {
+      "title": "CallLog",
+      "description": "An ElevenLabs interactive call log record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "conversationId": { "type": "string" },
+        "agentId": { "type": "string" },
+        "agentName": { "type": "string" },
+        "branchName": { "type": "string" },
+        "callerName": { "type": "string" },
+        "companyName": { "type": "string" },
+        "ticketNumber": { "type": "string" },
+        "callDurationSeconds": { "type": "integer" },
+        "callStatus": { "type": "string" },
+        "transcript": { "type": "string" },
+        "transcriptSummary": { "type": "string" },
+        "recordingUrl": { "type": "string" },
+        "callStartedAt": { "type": "string", "format": "date-time" },
+        "callEndedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["conversationId", "agentId"]
     }
   },
   "firestore": {
@@ -43,6 +67,10 @@
     "/counters/{counterId}": {
       "schema": "Counter",
       "description": "Collection of counters for sequential IDs"
+    },
+    "/call_logs/{logId}": {
+      "schema": "CallLog",
+      "description": "Collection of ElevenLabs interactive call analytics records"
     }
   }
 }

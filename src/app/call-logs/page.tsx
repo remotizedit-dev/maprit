@@ -31,6 +31,33 @@ export default function CallAnalyticsPage() {
   const [selectedLog, setSelectedLog] = useState<CallLog | null>(null);
   const { user } = useAuth();
 
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<{ text: string; error: boolean } | null>(null);
+
+  const handleSyncFromElevenLabs = async () => {
+    setSyncing(true);
+    setSyncMessage(null);
+    try {
+      const res = await fetch("/api/elevenlabs/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId: "agent_3601kv308q2jf5m8cagy8v2tfrg9" })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSyncMessage({ text: data.message, error: false });
+        await fetchCallLogs();
+      } else {
+        setSyncMessage({ text: data.error || "Failed to sync conversations.", error: true });
+      }
+    } catch (err: any) {
+      console.error("Sync error:", err);
+      setSyncMessage({ text: "Failed to connect to the server sync service.", error: true });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   useEffect(() => {
     fetchCallLogs();
   }, [user]);
@@ -129,15 +156,39 @@ export default function CallAnalyticsPage() {
           </div>
           <div className="flex gap-3">
             <button
+              onClick={handleSyncFromElevenLabs}
+              disabled={syncing || loading}
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-750 text-white px-4 py-2.5 rounded-lg font-semibold transition-all shadow-sm active:scale-95 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Syncing Agent...' : 'Sync ElevenLabs'}
+            </button>
+            <button
               onClick={fetchCallLogs}
               disabled={loading}
               className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-lg font-semibold transition-all shadow-sm active:scale-95"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${loading && !syncing ? 'animate-spin' : ''}`} />
               Refresh
             </button>
           </div>
         </header>
+
+        {syncMessage && (
+          <div className={`mb-6 p-4 rounded-xl border flex items-center justify-between transition-all ${
+            syncMessage.error 
+              ? "bg-rose-50 border-rose-100 text-rose-800" 
+              : "bg-emerald-50 border-emerald-100 text-emerald-800"
+          }`}>
+            <p className="text-sm font-semibold">{syncMessage.text}</p>
+            <button 
+              onClick={() => setSyncMessage(null)}
+              className="text-xs font-bold bg-white/40 hover:bg-white/80 px-2.5 py-1 rounded border border-transparent shadow-sm transition-colors"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -270,15 +321,13 @@ export default function CallAnalyticsPage() {
                               <FileText className="w-4 h-4" />
                             </button>
                             {log.recordingUrl ? (
-                              <a 
-                                href={log.recordingUrl} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
+                              <button 
+                                onClick={() => setSelectedLog(log)}
                                 className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
                                 title="Play Recording"
                               >
                                 <Play className="w-4 h-4" />
-                              </a>
+                              </button>
                             ) : (
                               <button disabled className="p-2 text-slate-200 cursor-not-allowed">
                                 <Play className="w-4 h-4" />
@@ -394,16 +443,21 @@ export default function CallAnalyticsPage() {
                     </div>
 
                     {selectedLog.recordingUrl && (
-                      <div className="pt-4">
-                         <a 
-                          href={selectedLog.recordingUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md active:scale-95"
-                        >
-                          <Play className="w-5 h-5" />
-                          Listen to Call Recording
-                        </a>
+                      <div className="pt-6 border-t border-slate-100">
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Interactive Recording Player</h4>
+                        <div className="bg-slate-50 p-4 border border-slate-200 rounded-xl flex flex-col md:flex-row items-center gap-4">
+                          <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                            <Play className="w-5 h-5 text-indigo-600 animate-pulse" />
+                          </div>
+                          <div className="flex-1 w-full space-y-1">
+                            <p className="text-xs font-bold text-slate-500">ElevenLabs Audio Stream Channel</p>
+                            <audio 
+                              src={selectedLog.recordingUrl} 
+                              controls 
+                              className="w-full h-10 focus:outline-none"
+                            />
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
