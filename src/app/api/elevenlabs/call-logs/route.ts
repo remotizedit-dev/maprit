@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/src/firebase/firebase-admin';
 import { getBranchByAgentId } from '@/src/lib/agent-branch-map';
-import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,18 +13,27 @@ export async function POST(req: NextRequest) {
     const payload = await req.json();
     console.log("Incoming ElevenLabs Post-Call Payload:", JSON.stringify(payload, null, 2));
 
-    // Extract basic IDs
-    const conversationId = payload.conversation_id || "";
-    const agentId = payload.agent_id || "";
+    // Extract basic IDs with nested fallback support
+    const conversationId = payload.conversation_id || payload.conversation?.conversation_id || "";
+    const agentId = payload.agent_id || payload.conversation?.agent_id || "";
+
+    if (!conversationId) {
+      console.warn("Webhook received with missing conversation_id in payload:", payload);
+    }
     
     // Extract Metadata
-    const metadata = payload.metadata || {};
-    const duration = metadata.call_duration_secs || 0;
-    const startTime = metadata.start_time_unix_ms ? new Date(metadata.start_time_unix_ms) : null;
-    const endTime = metadata.end_time_unix_ms ? new Date(metadata.end_time_unix_ms) : null;
+    const metadata = payload.metadata || payload.conversation?.metadata || {};
+    const duration = payload.call_duration_secs || metadata.call_duration_secs || 0;
+    
+    // Support root level timestamps or metadata nested timestamps
+    const startTimeUnix = payload.start_time_unix_ms || metadata.start_time_unix_ms;
+    const endTimeUnix = payload.end_time_unix_ms || metadata.end_time_unix_ms;
+    
+    const startTime = startTimeUnix ? new Date(startTimeUnix) : null;
+    const endTime = endTimeUnix ? new Date(endTimeUnix) : null;
 
     // Extract Analysis (Summary & Data Collection)
-    const analysis = payload.analysis || {};
+    const analysis = payload.analysis || payload.conversation?.analysis || {};
     const summary = analysis.transcript_summary || "";
     const dataResults = analysis.data_collection_results || {};
 
@@ -36,22 +44,25 @@ export async function POST(req: NextRequest) {
       return "";
     };
 
-    const callerName = getVal('caller_name');
-    const companyName = getVal('company_name');
-    const ticketNumber = getVal('ticket_number');
+    const callerName = getVal('caller_name') || "Anonymous Caller";
+    const companyName = getVal('company_name') || "Unknown";
+    const ticketNumber = getVal('ticket_number') || "-";
 
     // Transcript reconstruction (if possible from array)
     let transcriptText = "";
-    if (Array.isArray(payload.transcript)) {
-      transcriptText = payload.transcript.map((t: any) => `${t.role}: ${t.message}`).join("\n");
+    const transcriptArray = payload.transcript || payload.conversation?.transcript || [];
+    if (Array.isArray(transcriptArray)) {
+      transcriptText = transcriptArray
+        .map((t: any) => `${t.role === "user" ? "Caller" : "Agent"}: ${t.message}`)
+        .join("\n");
     }
 
     // Agent Name
-    const agentName = payload.agent_name || "Unknown Agent";
+    const agentName = payload.agent_name || payload.conversation?.agent_name || "Support Assistant";
     const branchName = getBranchByAgentId(agentId);
 
-    // Recording / Audio URL
-    const recordingUrl = payload.audio_url || "";
+    // Recording / Audio URL - Map to secure local proxy stream
+    const recordingUrl = conversationId ? `/api/elevenlabs/audio/${conversationId}` : "";
 
     const callLogData = {
       conversationId,
@@ -62,13 +73,13 @@ export async function POST(req: NextRequest) {
       companyName,
       ticketNumber,
       callDurationSeconds: duration,
-      callStatus: payload.status || "completed",
+      callStatus: payload.status || payload.conversation?.status || "completed",
       transcript: transcriptText,
       transcriptSummary: summary,
-      recordingUrl: recordingUrl,
-      callStartedAt: startTime ? FieldValue.serverTimestamp() : null, // Note: startTime is JS Date, we might prefer simple date or serverTimestamp
-      callEndedAt: endTime ? FieldValue.serverTimestamp() : null,
-      createdAt: FieldValue.serverTimestamp(),
+      recordingUrl,
+      callStartedAt: startTime,
+      callEndedAt: endTime,
+      createdAt: startTime || new Date(),
       rawPayload: payload
     };
 
