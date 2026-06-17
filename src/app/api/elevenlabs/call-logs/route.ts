@@ -20,6 +20,16 @@ export async function POST(req: NextRequest) {
     if (!conversationId) {
       console.warn("Webhook received with missing conversation_id in payload:", payload);
     }
+
+    // Filter by configured Agent ID: discard any non-matching agent calls
+    const targetAgentId = process.env.ELEVENLABS_AGENT_ID || "agent_3601kv308q2jf5m8cagy8v2tfrg9";
+    if (agentId && agentId !== targetAgentId) {
+      console.log(`Webhook received but ignored: Agent ID ${agentId} does not match configured target agent ${targetAgentId}`);
+      return NextResponse.json({
+        success: true,
+        message: `Webhook processed and ignored: call does not belong to configured agent ${targetAgentId}`
+      });
+    }
     
     // Extract Metadata
     const metadata = payload.metadata || payload.conversation?.metadata || {};
