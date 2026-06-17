@@ -14,7 +14,16 @@ const navigation = [
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { signOut, user } = useAuth();
+  const { signOut, user, isAdmin } = useAuth();
+
+  const navItems = [
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "All Tickets", href: "/tickets", icon: Headset },
+    ...(isAdmin ? [
+      { name: "Call Analytics", href: "/call-logs", icon: PhoneCall },
+      { name: "User Management", href: "/admin/users", icon: UserIcon }
+    ] : [])
+  ];
 
   return (
     <nav className="flex flex-col w-64 bg-white border-r border-slate-200 h-screen sticky top-0">
@@ -29,11 +38,7 @@ export default function Navigation() {
       </div>
       
       <div className="flex-1 px-4 py-6 space-y-1">
-        {[
-          { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-          { name: "All Tickets", href: "/tickets", icon: Headset },
-          { name: "Call Analytics", href: "/call-logs", icon: PhoneCall },
-        ].map((item) => {
+        {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
@@ -72,7 +77,9 @@ export default function Navigation() {
             )}
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-slate-900 truncate">{user.displayName || "Agent"}</p>
-              <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-tighter">Helpdesk Staff</p>
+              <p className={cn("text-[10px] font-bold truncate uppercase tracking-tighter", isAdmin ? "text-indigo-600" : "text-slate-400")}>
+                {isAdmin ? "Super Admin" : "Helpdesk Staff"}
+              </p>
             </div>
           </div>
         )}

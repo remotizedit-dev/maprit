@@ -16,6 +16,7 @@ import { Loader2 } from "lucide-react";
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isAdmin: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -86,10 +87,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const SUPER_ADMINS = [
+    "remotizedit@gmail.com",
+    "faiyaz.hossain@gmail.com",
+    "faiyaz.hossain@cobait.com"
+  ];
+
+  const isAdmin = user && user.email ? SUPER_ADMINS.includes(user.email.toLowerCase()) : false;
   const isServer = typeof window === "undefined";
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, signInWithGoogle, signInWithEmail, signOut }}>
       {loading && !isServer ? (
         <div className="flex h-screen w-full items-center justify-center bg-slate-50">
           <div className="flex flex-col items-center gap-4">

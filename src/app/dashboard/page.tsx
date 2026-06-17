@@ -16,27 +16,39 @@ export default function Dashboard() {
   const [callCount, setCallCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [ticketsRes, callsRes] = await Promise.all([
-          fetch("/api/helpdesk/tickets/get"),
-          fetch("/api/elevenlabs/call-logs/get")
-        ]);
+        if (isAdmin) {
+          const [ticketsRes, callsRes] = await Promise.all([
+            fetch("/api/helpdesk/tickets/get"),
+            fetch("/api/elevenlabs/call-logs/get")
+          ]);
 
-        const ticketsData = await ticketsRes.json();
-        const callsData = await callsRes.json();
+          const ticketsData = await ticketsRes.json();
+          const callsData = await callsRes.json();
 
-        if (ticketsData.success) {
-          setTickets(ticketsData.tickets);
+          if (ticketsData.success) {
+            setTickets(ticketsData.tickets);
+          } else {
+            setError(ticketsData.message || "Failed to fetch tickets");
+          }
+
+          if (callsData.success) {
+            setCallCount(callsData.callLogs.length);
+          }
         } else {
-          setError(ticketsData.message || "Failed to fetch tickets");
-        }
+          const ticketsRes = await fetch("/api/helpdesk/tickets/get");
+          const ticketsData = await ticketsRes.json();
 
-        if (callsData.success) {
-          setCallCount(callsData.callLogs.length);
+          if (ticketsData.success) {
+            setTickets(ticketsData.tickets);
+          } else {
+            setError(ticketsData.message || "Failed to fetch tickets");
+          }
+          setCallCount(0);
         }
       } catch (error: any) {
         console.error("Error fetching dashboard data:", error);
@@ -50,25 +62,35 @@ export default function Dashboard() {
     
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, isAdmin]);
 
   const handleRefresh = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [ticketsRes, callsRes] = await Promise.all([
-        fetch("/api/helpdesk/tickets/get"),
-        fetch("/api/elevenlabs/call-logs/get")
-      ]);
+      if (isAdmin) {
+        const [ticketsRes, callsRes] = await Promise.all([
+          fetch("/api/helpdesk/tickets/get"),
+          fetch("/api/elevenlabs/call-logs/get")
+        ]);
 
-      const ticketsData = await ticketsRes.json();
-      const callsData = await callsRes.json();
+        const ticketsData = await ticketsRes.json();
+        const callsData = await callsRes.json();
 
-      if (ticketsData.success) {
-        setTickets(ticketsData.tickets);
-      }
-      if (callsData.success) {
-        setCallCount(callsData.callLogs.length);
+        if (ticketsData.success) {
+          setTickets(ticketsData.tickets);
+        }
+        if (callsData.success) {
+          setCallCount(callsData.callLogs.length);
+        }
+      } else {
+        const ticketsRes = await fetch("/api/helpdesk/tickets/get");
+        const ticketsData = await ticketsRes.json();
+
+        if (ticketsData.success) {
+          setTickets(ticketsData.tickets);
+        }
+        setCallCount(0);
       }
     } catch (error) {
       console.error("Error refreshing dashboard data:", error);
@@ -121,7 +143,7 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <SummaryCards stats={stats} />
+        <SummaryCards stats={stats} showCallAnalytics={isAdmin} />
 
         {error && (
           <div className="mt-8 p-6 bg-rose-50 border border-rose-100 rounded-xl">

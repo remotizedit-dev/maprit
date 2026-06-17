@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/src/components/AuthProvider";
 import Navigation from "@/src/components/Navigation";
+import { useRouter } from "next/navigation";
 import { 
   PhoneCall, 
   Search, 
@@ -29,7 +30,18 @@ export default function CallAnalyticsPage() {
   const [branchFilter, setBranchFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedLog, setSelectedLog] = useState<CallLog | null>(null);
-  const { user } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        router.push("/login");
+      } else if (!isAdmin) {
+        router.push("/dashboard");
+      }
+    }
+  }, [user, authLoading, isAdmin, router]);
 
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<{ text: string; error: boolean } | null>(null);
@@ -38,9 +50,13 @@ export default function CallAnalyticsPage() {
     setSyncing(true);
     setSyncMessage(null);
     try {
+      const token = await user?.getIdToken();
       const res = await fetch("/api/elevenlabs/sync", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ agentId: "agent_3601kv308q2jf5m8cagy8v2tfrg9" })
       });
       const data = await res.json();
@@ -59,13 +75,20 @@ export default function CallAnalyticsPage() {
   };
 
   useEffect(() => {
-    fetchCallLogs();
-  }, [user]);
+    if (user && isAdmin) {
+      fetchCallLogs();
+    }
+  }, [user, isAdmin]);
 
   const fetchCallLogs = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/elevenlabs/call-logs/get");
+      const token = await user?.getIdToken();
+      const res = await fetch("/api/elevenlabs/call-logs/get", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
       const data = await res.json();
       if (data.success) {
         setCallLogs(data.callLogs);

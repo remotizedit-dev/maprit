@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/src/firebase/firebase-admin';
+import { verifyAdmin } from '@/src/lib/verify-admin';
 
 export async function GET(req: NextRequest) {
   try {
+    const authResult = await verifyAdmin(req);
+    if (!authResult.isValid) {
+      return NextResponse.json({ success: false, error: authResult.error }, { status: authResult.status || 401 });
+    }
+
     const adminDb = getAdminDb();
     if (!adminDb) {
       return NextResponse.json({ success: false, error: "Database not available" }, { status: 500 });
