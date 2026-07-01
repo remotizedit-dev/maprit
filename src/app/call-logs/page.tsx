@@ -152,7 +152,7 @@ export default function CallAnalyticsPage() {
         <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Call Analytics</h1>
-            <p className="text-slate-500 mt-1">Intelligence and transcripts from ElevenLabs voice interactions.</p>
+            <p className="text-slate-500 mt-1">Intelligence and transcripts </p>
           </div>
           <div className="flex gap-3">
             <button
@@ -161,7 +161,7 @@ export default function CallAnalyticsPage() {
               className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-750 text-white px-4 py-2.5 rounded-lg font-semibold transition-all shadow-sm active:scale-95 disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-              {syncing ? 'Syncing Agent...' : 'Sync ElevenLabs'}
+              {syncing ? 'Syncing Agent...' : 'Sync Server'}
             </button>
             <button
               onClick={fetchCallLogs}
