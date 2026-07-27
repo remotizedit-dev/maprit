@@ -1,9 +1,9 @@
 {
-  "/api/elevenlabs/call-logs/get/route": "app/api/elevenlabs/call-logs/get/route.js",
   "/api/helpdesk/tickets/get/route": "app/api/helpdesk/tickets/get/route.js",
+  "/api/elevenlabs/call-logs/get/route": "app/api/elevenlabs/call-logs/get/route.js",
+  "/api/admin/users/route": "app/api/admin/users/route.js",
+  "/page": "app/page.js",
   "/dashboard/page": "app/dashboard/page.js",
   "/login/page": "app/login/page.js",
-  "/admin/users/page": "app/admin/users/page.js",
-  "/call-logs/page": "app/call-logs/page.js",
-  "/tickets/page": "app/tickets/page.js"
+  "/admin/users/page": "app/admin/users/page.js"
 }
